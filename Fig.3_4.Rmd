@@ -1,0 +1,336 @@
+---
+title: "Figure.3"
+output: html_document
+author: Devon DeRaad
+date: 16 March 2019
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+This Rmd doc shows the steps to create Figure 3 from the publication: "Phenotypic clines across an unstudied hybrid zone in Woodhouse's Scrub-Jay (Aphelocoma woodhouseii)"
+
+```{r libset}
+library(ggplot2)
+#install.packages("devtools")
+library(devtools)
+#install_github("vqv/ggbiplot", force = TRUE)
+library(ggbiplot)
+library(grid)
+library(gridExtra)
+#install.packages("rworldmap")
+library(rworldmap)
+library(maps)
+#install.packages("mapdata")
+library(mapdata)
+library(ggmap)
+#install.packages("ggridges")
+library(ggridges)
+```
+
+
+Read in dataframe containing all morphological data
+```{r read in}
+scrubspecmorph <- read.csv("~/Dropbox/scrub poster/manuscript/scrubspecmorph.csv", header=T)
+```
+
+
+```{r norm check}
+##normalitycheck
+hist(scrubspecmorph$wing)
+hist(scrubspecmorph$tail)
+hist(scrubspecmorph$tarsus)
+hist(scrubspecmorph$bl)
+hist(scrubspecmorph$bw)
+hist(scrubspecmorph$bd)
+##all six characteristics look normalish
+```
+
+Make a few exploratory plots to get a feel for the data and the size differences between individual subspecies, and  between lineages as a whole.
+```{r wl}
+###compare wing length between subspecies
+subspecwing<-ggplot(scrubspecmorph, aes(subspecies, wing)) + 
+  geom_boxplot() +
+  ylab("wing length (mm)")+
+  xlab("subspec")
+#plot
+subspecwing
+
+###compare lineage level differences in wing length
+specwing<-ggplot(scrubspecmorph, aes(locality, wing)) + 
+  geom_boxplot() +
+  ylab("wing length (mm)")+
+  xlab("group")
+#plot
+specwing
+```
+
+investigate sexual dimorphism identified by pitelka (1951)
+```{r sex.diffs}
+#compare tail length by sex
+tailsex<-ggplot(scrubspecmorph, aes(sex, tail)) + 
+  geom_boxplot() +
+  ylab("tail length (mm)")+
+  xlab("sex")
+#plot
+tailsex #noticeable difference
+
+#wing length by sex
+wingsex<-ggplot(scrubspecmorph, aes(sex, wing)) + 
+  geom_boxplot() +
+  ylab("wing length (mm)")+
+  xlab("sex")
+#plot
+wingsex #males slightly larger once again
+```
+
+Calculate p-value for effect of sex on all 6 size characteristics simultaneously using a MANOVA.
+```{r sex.diff.manova}
+#Manova for male v female in all 6 characteristics
+fem.male <- manova(cbind(wing, tail, tarsus, bl, bw, bd) ~ sex, data = scrubspecmorph)
+summary(fem.male)
+```
+Extremely significant sex difference, likely driven by consistency (lack of variation within groups) leading to small overall size difference being considered very un-random in it's distribution between the sexes.
+
+Make PCA 
+```{r pca1}
+##morph PCA
+pca.morph<- prcomp(scrubspecmorph[, 8:13])
+#PrintPCA
+print(pca.morph)
+#summarize PC's
+summary(pca.morph)
+#visualize the differences between sexes
+ggbiplot(pca.morph, obs.scale = 1, var.scale = 1,
+         groups = scrubspecmorph$sex, ellipse = TRUE) +
+  scale_color_discrete(name = '')
+```
+
+The difference between the sexes is largely explained by wing and tail length differences which load heavily on PC1. We have extremely similar sex ratios between the two lineages, and the overall difference is low, but it is worth monitoring that there is consistently detectable sexual dimorphism.
+
+```{r lat corr}
+#plot winglength v latitude
+plot(scrubspecmorph$lat, scrubspecmorph$wing)
+#plot taillength v latitude
+plot(scrubspecmorph$lat, scrubspecmorph$tail)
+```
+
+Here we see a distinct pattern of smaller birds at higher (more northern) latitudes
+
+Lets check to see whether this pattern holds once sex is accounted for
+```{r lat sex corr}
+#subset dataset by sex
+malescrub<- subset(scrubspecmorph, scrubspecmorph$sex=="male")
+femalescrub<-subset(scrubspecmorph, scrubspecmorph$sex=="female")
+#plot males
+plot(malescrub$lat, malescrub$wing)
+plot(malescrub$lat, malescrub$tail)
+#plot females
+plot(femalescrub$lat, femalescrub$wing)
+plot(femalescrub$lat, femalescrub$tail)
+```
+
+#Relationships between size and geography hold whether divided by sex or not divided at all.
+```{r lat sex corr color coded}
+#plot winglength v latitude color coded for sex
+plot(scrubspecmorph$lat, scrubspecmorph$wing, col = scrubspecmorph$sex)
+#plot taillength v latitude color coded for sex
+plot(scrubspecmorph$lat, scrubspecmorph$tail, col = scrubspecmorph$sex)
+```
+
+Size differences between the sexes noticeable but the pattern is identical. Males in red, females in black. The two sexes are largely overlapping and identical in signal.
+
+Check out the difference in amount of blue on the back
+```{r spec}
+#check out the spec variable based on group
+#boxplot based on the spec variable S1.blue (blue saturation of the mantle)
+S1.blueboxgroup<-ggplot(scrubspecmorph, aes(locality, S1.blue)) + 
+  geom_boxplot() +
+  ylab("s1.blue")+
+  xlab("group")
+S1.blueboxgroup
+#by sub
+S1.blueboxsub<-ggplot(scrubspecmorph, aes(subspecies, S1.blue)) + 
+  geom_boxplot() +
+  ylab("s1.blue")+
+  xlab("group")
+S1.blueboxsub
+```
+
+
+Make a PCA for each sex separately
+```{r pcas}
+#pca for each sex separately
+pca.malescrubmorph <- prcomp(malescrub[,8:13])
+pca.femalescrubmorph <- prcomp(femalescrub[,8:13])
+#visualize male
+ggbiplot(pca.malescrubmorph, obs.scale = 1, var.scale = 1,
+         groups = malescrub$locality, ellipse = FALSE,
+         var.axes = FALSE) +
+  scale_color_discrete(name = '') +
+  theme(legend.direction = 'vertical')
+#visualize female
+ggbiplot(pca.femalescrubmorph, obs.scale = 1, var.scale = 1,
+         groups = femalescrub$locality, ellipse = FALSE,
+         var.axes = FALSE) +
+  scale_color_discrete(name = '') +
+  theme(legend.direction = 'vertical')
+```
+
+Both PCAs separate the lineages nicely
+
+We are now going to make a PCA for all individuals
+```{r pca info}
+#PCA of all variables morph + blue color using correlative matrix
+pca.scruball <- princomp(scrubspecmorph[,8:14], cor=TRUE)
+
+#visualize PCA of all 6 morph variables + blue saturation of mantle by lineage
+ggbiplot(pca.scruball, obs.scale = 1, var.scale = 1,
+         groups = scrubspecmorph$locality, ellipse = FALSE) +
+  scale_color_discrete(name = '') +
+  theme(legend.direction = 'horizontal')
+```
+We can see that this nicely separates the lineages based on body size differences on PC1.
+
+We will now pull out the PC values for each individual and append it to our original dataset, so that we can use PC1 as a variable indicating general body size.
+```{r pca shit}
+#view loadings by variable
+unclass(pca.scruball$loadings)
+#create dataframe of PC scores
+pcascoresbyindiv<-data.frame(pca.scruball$scores)
+#insert id column from scrubspecmorph into pcascorebyindiv
+pcascoresbyindiv$id <- scrubspecmorph$id
+#merge datasets by the column ID to ensure that the correct values stay with correct individuals
+PCAscrubspecmorph<-merge(scrubspecmorph, pcascoresbyindiv, by = "id")
+head(PCAscrubspecmorph)
+```
+#We can use the values of PC1 as a proxy for general body size in downstream analyses.
+
+Let's clean up that PCA for publication
+```{r pcas.for.days, fig.height=12, fig.width=12}
+#PCA color coded by lineage with sex indicated by shape
+ggbiplot(pca.scruball, obs.scale = 1, var.scale = 1,
+         groups = scrubspecmorph$locality, ellipse = TRUE) +
+  geom_point(aes(colour=scrubspecmorph$locality, shape=scrubspecmorph$sex), size = 3)+
+  scale_color_discrete(name ="Locality", 
+                       labels = c("Contact zone", "Sumichrasti group", "Woodhouse's group")) +
+  theme(legend.direction = 'vertical') +
+  scale_shape_discrete(name = "Sex", labels = c("Female", "Male"))+
+  theme_bw()
+```
+
+Looks good, now specify subspecies and custom color scheme to make the PCA presented in the text.
+```{r fig.3, fig.height=12, fig.width=12}
+###Make manuscript Figure 3###
+##
+#
+PCAallsubspecies<-ggbiplot(pca.scruball, obs.scale = 1, var.scale = 1,
+                           groups = scrubspecmorph$subspecies, ellipse = FALSE) +
+  geom_point(aes(colour=scrubspecmorph$subspecies, shape=scrubspecmorph$sex), size = 3)+
+  scale_color_discrete(name ="Subspecies") +
+  scale_color_manual(values=c("tomato2", "darkred", "green4", "navyblue", "cornflowerblue"),
+                     name="Subspecies",
+                     limits=c("grisea", "cyanotis", "sumichrasti/cyanotis", "sumichrasti", "remota"))+
+  scale_shape_discrete(name = "Sex", labels = c("Female", "Male"))+
+  guides(color = guide_legend(order=1),
+         shape = guide_legend(order=2))+
+  theme_bw()+
+  theme(legend.text=element_text(size=14, face = "italic"),
+        legend.position =c(.18,.18),
+        legend.background = element_rect(fill="transparent"),
+        legend.title=element_text(size=16))
+#print
+PCAallsubspecies
+```
+
+#Figure 3. PCA of 133 individuals based on 6 morphological characteristics and one variable associated with the blue saturation of the back. Individuals from the contact zone (sites E-G) are labeled as sumichrasti/cyanotis.
+
+Plot the same PCA, showing axes 2 & 3
+```{r supshit, fig.height=12, fig.width=12}
+PCAaxestwoandthree<-ggbiplot(pca.scruball, choices = 2:3, obs.scale = 1, var.scale = 1,
+                           groups = scrubspecmorph$subspecies, ellipse = FALSE) +
+  geom_point(aes(colour=scrubspecmorph$subspecies, shape=scrubspecmorph$sex), size = 3)+
+  scale_color_discrete(name ="Subspecies") +
+  scale_color_manual(values=c("tomato2", "darkred", "green4", "navyblue", "cornflowerblue"),
+                     name="Subspecies",
+                     limits=c("grisea", "cyanotis", "sumichrasti/cyanotis", "sumichrasti", "remota"))+
+  scale_shape_discrete(name = "Sex", labels = c("Female", "Male"))+
+  guides(color = guide_legend(order=1),
+         shape = guide_legend(order=2))+
+  theme_bw()+
+  theme(legend.text=element_text(size=14, face = "italic"),
+        legend.position =c(.18,.18),
+        legend.background = element_rect(fill="transparent"),
+        legend.title=element_text(size=16))
+PCAaxestwoandthree
+```
+
+Including PC axis 3 doesn't add a ton in terms of meaningfully separating these groups, and we feel comfortable only presenting PCs 1&2 in the manuscript.
+
+
+Next we visualized the differences in overall body size (PC1) by sex, and blue saturation with the sexes combined.
+```{r fig4ish}
+#separate sexes from the dataframe with PC values added as variables
+malescrub<-subset(PCAscrubspecmorph, sex == "male")
+femalescrub<-subset(PCAscrubspecmorph, sex == "female")
+
+#plot body size for males
+malebodsize<-ggplot(malescrub, aes(x = Comp.1, y = locality, fill = locality, color = locality)) +
+  geom_density_ridges(jittered_points = TRUE, position = "raincloud", alpha = .4) +
+  scale_color_manual(values = c("green4", "navyblue", "darkred"), aesthetics = c("fill", "color")) +
+  labs(x = "Male Body Size", y = "Group") +
+  scale_y_discrete(limits=c("sumichrasti", "contact", "woodhouse"), labels=c("sumichrast's", "contact", "woodhouse's")) +
+  theme_classic() +
+  theme(legend.position = "none")
+
+#plot body size for females
+femalebodsize<-ggplot(femalescrub, aes(x = Comp.1, y = locality, fill = locality, color = locality)) +
+  geom_density_ridges(jittered_points = TRUE, position = "raincloud", alpha = .4) +
+  scale_color_manual(values = c("green4", "navyblue", "darkred"), aesthetics = c("fill", "color")) +
+  labs(x = "Female Body Size", y = "Group") +
+  scale_y_discrete(limits=c("sumichrasti", "contact", "woodhouse"), labels=c("sumichrast's", "contact", "woodhouse's")) +
+  theme_classic() +
+  theme(legend.position = "none")
+
+#plot back color for all
+colorforall<-ggplot(PCAscrubspecmorph, aes(x = S1.blue, y = locality, fill = locality, color = locality)) +
+  geom_density_ridges(jittered_points = TRUE, position = "raincloud", alpha = .4) +
+  scale_color_manual(values = c("green4", "navyblue", "darkred"), aesthetics = c("fill", "color")) +
+  labs(x = "Blue Saturation of the Mantle", y = "Group") +
+  scale_y_discrete(limits=c("sumichrasti", "contact", "woodhouse"), labels=c("sumichrast's", "contact", "woodhouse's")) +
+  theme_classic() +
+  theme(legend.position = "none")
+```
+
+We used grid.arrange to arrange these three figures together. The arrows indicating smaller vs. larger were added in adobe photoshop.
+```{r fig.4, fig.height=10, fig.width=6}
+grid.arrange(malebodsize, femalebodsize, colorforall, ncol = 1)
+```
+
+#Figure 4. Denisty and scatterplots based on PC1 score (general body size) for males and females, and S1B (blue saturation of back plumage) for all individuals from Sumichrast's and Woodhouse's groups. Individuals from sites E, F, and G (Fig. 2) are considered the contact zone.
+
+
+
+
