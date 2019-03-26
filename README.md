@@ -3,4 +3,4 @@ Full dataset and scripts for analyses conducted from the manuscript "Phenotypic 
 
 The file scrubspecmorph.csv can be analyzed using the script Fig3_Fig4.R to analyze sex differences and do some informative data visualization. 'Fig.3_4.Rmd' and 'Fig.3_4.docx' show the step by step workflow to analyze morphopological differences between the groups.
 
-The file morph.csv can be analyzed using the scripts "S1B.R" and "pc1 hzar script.R" to create clines for between the Woodhouse's and Sumichrast's lineages for general body size and mantle color. This comprises Fig. 5.
+The files 'femalemorph.csv', 'malemorph.csv', 's1.blue.csv', and 'siteloc.csv' can be analyzed using the script 'fig.5.R' to create clines using hzar, showing the transition between the Woodhouse's and Sumichrast's lineages for general body size for each sex, and mantle color for the sexes combined. The file 'fig.5.Rmd' shows the workflow annotation.
