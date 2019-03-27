@@ -5,4 +5,4 @@ The file 'scrubspecmorph.csv' can be analyzed using the script 'Fig3_Fig4.R' to 
 
 The files 'femalemorph.csv', 'malemorph.csv', 's1.blue.csv', and 'siteloc.csv' can be analyzed using the script 'fig.5.R' to create clines using hzar, showing the transition between the Woodhouse's and Sumichrast's lineages for general body size for each sex, and mantle color for the sexes combined.
 
-Check out vignette style annotated workflow to make Figures 3 & 4: https://devonderaad.github.io/Woodhouses-morphology/Fig.3_4.html and Figure 5: https://devonderaad.github.io/Woodhouses-morphology/Fig.5.html
+Check out vignette style annotated workflow to make Figures 3 & 4: https://devonderaad.github.io/Woodhouses-morphology/Fig.3_4.html Figure 5: https://devonderaad.github.io/Woodhouses-morphology/Fig.5.html and supplementary/tables: https://devonderaad.github.io/Woodhouses-morphology/tables.supplement.html
