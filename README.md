@@ -8,5 +8,7 @@ The files 'femalemorph.csv', 'malemorph.csv', 's1.blue.csv', and 'siteloc.csv' c
 Check out vignette style annotated workflows for all analyses presented here
 
 Figures 3 & 4: https://devonderaad.github.io/Woodhouses-morphology/Fig.3_4.html
+
 Figure 5: https://devonderaad.github.io/Woodhouses-morphology/Fig.5.html
+
 supplementary/tables: https://devonderaad.github.io/Woodhouses-morphology/tables.supplement.html
